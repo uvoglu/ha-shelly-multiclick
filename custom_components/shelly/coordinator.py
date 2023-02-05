@@ -54,10 +54,11 @@ from .const import (
 )
 from .utils import device_update_info, get_device_name, get_rpc_device_wakeup_period
 
-_DeviceT = TypeVar("_DeviceT", bound="BlockDevice|RpcDevice")
-
 # Multiclick delay between clicks in seconds
 MC_MULTICLICK_DELAY = 0.7
+
+_DeviceT = TypeVar("_DeviceT", bound="BlockDevice|RpcDevice")
+
 
 @dataclass
 class ShellyEntryData:
@@ -158,22 +159,23 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
             update_interval = (
                 UPDATE_PERIOD_MULTIPLIER * device.settings["coiot"]["update_period"]
             )
+
+        device_name = get_device_name(device) if device.initialized else entry.title
         super().__init__(hass, entry, device, update_interval)
 
         self._last_cfg_changed: int | None = None
         self._last_mode: str | None = None
         self._last_effect: int | None = None
         self._last_input_events_count: dict = {}
-
-        entry.async_on_unload(
-            self.async_add_listener(self._async_device_updates_handler)
-        )
         self._mc_device_name = device_name
         self._mc_last_events: dict = {}
         self._mc_last_state: dict = {}
         self._mc_click_count: dict = {}
         self._mc_click_timer: dict = {}
 
+        entry.async_on_unload(
+            self.async_add_listener(self._async_device_updates_handler)
+        )
         entry.async_on_unload(
             hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self._handle_ha_stop)
         )
