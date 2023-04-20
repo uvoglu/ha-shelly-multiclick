@@ -52,7 +52,7 @@ from .const import (
     UPDATE_PERIOD_MULTIPLIER,
     BLEScannerMode,
 )
-from .utils import device_update_info, get_device_name, get_rpc_device_wakeup_period
+from .utils import device_update_info, get_rpc_device_wakeup_period
 
 # Multiclick delay between clicks in seconds
 MC_MULTICLICK_DELAY = 0.7
@@ -90,7 +90,7 @@ class ShellyCoordinatorBase(DataUpdateCoordinator[None], Generic[_DeviceT]):
         self.entry = entry
         self.device = device
         self.device_id: str | None = None
-        device_name = get_device_name(device) if device.initialized else entry.title
+        device_name = device.name if device.initialized else entry.title
         interval_td = timedelta(seconds=update_interval)
         super().__init__(hass, LOGGER, name=device_name, update_interval=interval_td)
 
@@ -159,14 +159,14 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
             update_interval = (
                 UPDATE_PERIOD_MULTIPLIER * device.settings["coiot"]["update_period"]
             )
-
-        device_name = get_device_name(device) if device.initialized else entry.title
+        device_name = device.name if device.initialized else entry.title
         super().__init__(hass, entry, device, update_interval)
 
         self._last_cfg_changed: int | None = None
         self._last_mode: str | None = None
         self._last_effect: int | None = None
         self._last_input_events_count: dict = {}
+        self._last_target_temp: float | None = None
         self._mc_device_name = device_name
         self._mc_last_events: dict = {}
         self._mc_last_state: dict = {}
@@ -241,6 +241,18 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
         for block in self.device.blocks:
             if block.type == "device":
                 cfg_changed = block.cfgChanged
+
+            if self.model == "SHTRV-01":
+                # Reloading the entry is not needed when the target temperature changes
+                if "targetTemp" in block.sensor_ids:
+                    if self._last_target_temp != block.targetTemp:
+                        self._last_cfg_changed = None
+                    self._last_target_temp = block.targetTemp
+                # Reloading the entry is not needed when the mode changes
+                if "mode" in block.sensor_ids:
+                    if self._last_mode != block.mode:
+                        self._last_cfg_changed = None
+                    self._last_mode = block.mode
 
             # For dual mode bulbs ignore change if it is due to mode/effect change
             if self.model in DUAL_MODE_LIGHT_MODELS:
