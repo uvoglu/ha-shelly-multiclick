@@ -19,3 +19,9 @@ e.g.,
 ```console
 git diff ca8a055b1678e74ea16adc10cd72b08debb1bf17 091a3372f678e222edb5dc3e913c162b75d57900 > diff-history/changes-2023-4-5.diff
 ```
+
+To compare between a specific tag and current HEAD, run the following
+
+```console
+git diff upstream-2023.12.3 custom_components/shelly > diff-history/changes-2023-12-3.diff
+```
