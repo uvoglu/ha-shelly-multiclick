@@ -29,6 +29,7 @@ from .const import (
     CONF_SLEEP_PERIOD,
     DOMAIN,
     LOGGER,
+    MODEL_WALL_DISPLAY,
     BLEScannerMode,
 )
 from .coordinator import async_reconnect_soon, get_entry_data
@@ -39,6 +40,7 @@ from .utils import (
     get_info_gen,
     get_model_name,
     get_rpc_device_sleep_period,
+    get_rpc_device_wakeup_period,
     get_ws_context,
     mac_address_from_name,
 )
@@ -76,9 +78,13 @@ async def validate_input(
         )
         await rpc_device.shutdown()
 
+        sleep_period = get_rpc_device_sleep_period(
+            rpc_device.config
+        ) or get_rpc_device_wakeup_period(rpc_device.status)
+
         return {
             "title": rpc_device.name,
-            CONF_SLEEP_PERIOD: get_rpc_device_sleep_period(rpc_device.config),
+            CONF_SLEEP_PERIOD: sleep_period,
             "model": rpc_device.shelly.get("model"),
             "gen": 2,
         }
@@ -358,8 +364,10 @@ class ShellyConfigFlow(ConfigFlow, domain=DOMAIN):
     @callback
     def async_supports_options_flow(cls, config_entry: ConfigEntry) -> bool:
         """Return options flow support for this handler."""
-        return config_entry.data.get("gen") == 2 and not config_entry.data.get(
-            CONF_SLEEP_PERIOD
+        return (
+            config_entry.data.get("gen") == 2
+            and not config_entry.data.get(CONF_SLEEP_PERIOD)
+            and config_entry.data.get("model") != MODEL_WALL_DISPLAY
         )
 
 
