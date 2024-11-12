@@ -124,11 +124,12 @@ class ShellyCoordinatorBase[_DeviceT: BlockDevice | RpcDevice](
             hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self._handle_ha_stop)
         )
 
-    def _mc_send_event(
+    @callback
+    def _async_mc_send_event(
         self, channel, delete, momentary_button, click_count, click_events
     ):
         if momentary_button:
-            self.hass.bus.fire(
+            self.hass.bus.async_fire(
                 "shelly.multiclick",
                 {
                     ATTR_DEVICE_ID: self.device_id,
@@ -140,7 +141,7 @@ class ShellyCoordinatorBase[_DeviceT: BlockDevice | RpcDevice](
                 },
             )
         else:
-            self.hass.bus.fire(
+            self.hass.bus.async_fire(
                 "shelly.multiclick",
                 {
                     ATTR_DEVICE_ID: self.device_id,
@@ -398,7 +399,7 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                             if mc_momentary_button:
                                 if block.input != self._mc_last_state.get(channel):
                                     self._mc_click_count[channel] += 1
-                                self._mc_send_event(
+                                self._async_mc_send_event(
                                     channel, 
                                     False, 
                                     mc_momentary_button, 
@@ -424,7 +425,7 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                         if not mc_momentary_button or block.input == 0:
                             self._mc_click_timer[channel] = Timer(
                                 MC_MULTICLICK_DELAY, 
-                                self._mc_send_event, 
+                                self._async_mc_send_event, 
                                 args=(
                                     channel, 
                                     True, 
@@ -449,7 +450,7 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                             and len(self._mc_last_events[channel]) > 0
                         ):
                             if self._mc_last_events[channel][-1] == "L":
-                                self._mc_send_event(
+                                self._async_mc_send_event(
                                     channel, 
                                     False, 
                                     mc_momentary_button, 
@@ -460,7 +461,7 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                         if not mc_momentary_button or block.input == 0:
                             self._mc_click_timer[channel] = Timer(
                                 MC_MULTICLICK_DELAY, 
-                                self._mc_send_event, 
+                                self._async_mc_send_event, 
                                 args=(
                                     channel, 
                                     True,
