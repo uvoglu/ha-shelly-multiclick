@@ -6,7 +6,6 @@ import asyncio
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from datetime import timedelta
-from threading import Timer
 from typing import Any, cast
 
 from aioshelly.ble import async_ensure_ble_enabled, async_stop_scanner
@@ -423,19 +422,15 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                         self._mc_last_events[channel] += mc_curr_event
 
                         if not mc_momentary_button or block.input == 0:
-                            self._mc_click_timer[channel] = Timer(
+                            self._mc_click_timer[channel] = asyncio.get_running_loop().call_later(
                                 MC_MULTICLICK_DELAY, 
                                 self._async_mc_send_event, 
-                                args=(
-                                    channel, 
-                                    True, 
-                                    mc_momentary_button, 
-                                    self._mc_click_count[channel], 
-                                    self._mc_last_events[channel],
-                                ),
+                                channel, 
+                                True, 
+                                mc_momentary_button, 
+                                self._mc_click_count[channel], 
+                                self._mc_last_events[channel],
                             )
-
-                            self._mc_click_timer[channel].start()
 
                     if block.inputEventCnt == last_event_count and block.input != self._mc_last_state.get(channel):
                         if self._mc_click_timer.get(channel) is not None:
@@ -459,18 +454,15 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                                 )
 
                         if not mc_momentary_button or block.input == 0:
-                            self._mc_click_timer[channel] = Timer(
+                            self._mc_click_timer[channel] = asyncio.get_running_loop().call_later(
                                 MC_MULTICLICK_DELAY, 
                                 self._async_mc_send_event, 
-                                args=(
-                                    channel, 
-                                    True,
-                                    mc_momentary_button, 
-                                    self._mc_click_count[channel], 
-                                    self._mc_last_events[channel],
-                                ),
+                                channel, 
+                                True,
+                                mc_momentary_button, 
+                                self._mc_click_count[channel], 
+                                self._mc_last_events[channel],
                             )
-                            self._mc_click_timer[channel].start()
                 self._mc_last_state[channel] = block.input
 
             if (
