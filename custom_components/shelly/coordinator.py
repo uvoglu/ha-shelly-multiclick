@@ -128,7 +128,7 @@ class ShellyCoordinatorBase[_DeviceT: BlockDevice | RpcDevice](
         self, channel, delete, momentary_button, click_count, click_events
     ):
         if momentary_button:
-            self.hass.bus.async_fire(
+            self.hass.bus.fire(
                 "shelly.multiclick",
                 {
                     ATTR_DEVICE_ID: self.device_id,
@@ -140,7 +140,7 @@ class ShellyCoordinatorBase[_DeviceT: BlockDevice | RpcDevice](
                 },
             )
         else:
-            self.hass.bus.async_fire(
+            self.hass.bus.fire(
                 "shelly.multiclick",
                 {
                     ATTR_DEVICE_ID: self.device_id,
