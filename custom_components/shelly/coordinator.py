@@ -70,7 +70,7 @@ from .utils import (
 )
 
 # Multiclick delay between clicks in seconds
-MC_MULTICLICK_DELAY = 0.7
+MC_MULTICLICK_DELAY = 0.4
 
 @dataclass
 class ShellyEntryData:
@@ -463,6 +463,7 @@ class ShellyBlockCoordinator(ShellyCoordinatorBase[BlockDevice]):
                                 self._mc_click_count[channel], 
                                 self._mc_last_events[channel],
                             )
+
                 self._mc_last_state[channel] = block.input
 
             if (
